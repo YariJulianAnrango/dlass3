@@ -1,5 +1,5 @@
 from RNN import load_imdb
-from padconvertion import get_batches
+from Vraag_1 import get_batches
 
 import torch
 import torch.nn as nn
