@@ -109,3 +109,7 @@ for epoch in range(num_epochs):
     average_loss = total_loss / len(train_dataset)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
 
+with open("./results/results_rnn.txt", "w") as file:
+    file.write(str(loss_list[0]))
+    for i in loss_list:
+        file.write(","+str(i))
