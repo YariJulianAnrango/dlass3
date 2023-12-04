@@ -9,7 +9,7 @@ import torch.optim as optim
 from tqdm import tqdm
 
 device = torch.device("cpu")
-
+torch.manual_seed(0)
 (x_train, y_train), (x_val, y_val), (i2w, w2i), numcls = load_imdb(final=False)
 
 x_train, y_train = get_batches(x_train, y_train, batch_size=32)
@@ -72,27 +72,34 @@ train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 # Training loop
 loss_list = []
 hidden = None
+batch_loss_it = 25
+loss_crit = nn.CrossEntropyLoss()
 for epoch in range(num_epochs):
     total_loss = 0.0
-    for input_batch, target_batch in tqdm(train_dataset):
-        input, target = input_batch.to(device), target_batch.to(device).long()
+    batch_loss = 0
+    for i, data in enumerate(tqdm(train_dataset)):
+        input, target = data[0].to(device), data[1].to(device).long()
 
         optimizer.zero_grad()
 
         output, hidden = model(input, hidden)
 
-        loss = F.cross_entropy(output, target)
+        loss = loss_crit(output, target)
 
-        loss.backward(retain_graph=True)
+        loss.backward()
         optimizer.step()
 
         total_loss += loss.item()
-        loss_list.append(loss.item())
+        batch_loss += loss.item()
+        if i % batch_loss_it == batch_loss_it - 1:
+            avg_loss_b = batch_loss / batch_loss_it
+            batch_loss = 0
+            loss_list.append(avg_loss_b)
         # Print average loss for the epoch
     average_loss = total_loss / len(train_dataset)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
 
-with open("./results/results_rnn_torch.txt", "w") as file:
+with open("./results/results_rnn_torch_nn.txt", "w") as file:
     file.write(str(loss_list[0]))
     for i in loss_list:
         file.write(","+str(i))
