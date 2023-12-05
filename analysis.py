@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-with open("./results/results_rnn_torch_nn.txt", "r") as file:
+with open("./results/results_rnn_torch.txt", "r") as file:
     dat = file.read().strip().split(",")
     dat = np.array(dat).astype(float)
 

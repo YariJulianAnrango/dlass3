@@ -13,7 +13,7 @@ device = torch.device("mps" if torch.cuda.is_available() else "cpu")
 
 x_train, y_train = get_batches(x_train, y_train, batch_size=32)
 
-torch.manual_seed(0)
+torch.manual_seed(1)
 class Elman(nn.Module):
     def __init__(self, insize=300, outsize=300, hsize=300):
         super().__init__()
@@ -75,7 +75,7 @@ class Net(nn.Module):
         return linear_output_final, hidden_elman
 
 learning_rate = 0.001
-num_epochs = 5
+num_epochs = 10
 vocab_size = len(w2i)
 emb_dim = 300
 hidden_dim = 300
@@ -91,9 +91,9 @@ train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 hidden = None
 loss_list = []
 batch_loss_it = 25
-batch_loss = 0
 for epoch in range(num_epochs):
     total_loss = 0.0
+    batch_loss = 0
     for i, data in enumerate(tqdm(train_dataset)):
         input, target = data[0].to(device), data[1].to(device).long()
 

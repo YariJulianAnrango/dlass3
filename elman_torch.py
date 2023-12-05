@@ -9,7 +9,7 @@ import torch.optim as optim
 from tqdm import tqdm
 
 device = torch.device("cpu")
-torch.manual_seed(0)
+torch.manual_seed(1)
 (x_train, y_train), (x_val, y_val), (i2w, w2i), numcls = load_imdb(final=False)
 
 x_train, y_train = get_batches(x_train, y_train, batch_size=32)
@@ -57,7 +57,7 @@ class Net(nn.Module):
         return linear_output_final, hidden_elman
 
 learning_rate = 0.001
-num_epochs = 5
+num_epochs = 10
 vocab_size = len(w2i)
 emb_dim = 300
 hidden_dim = 300
@@ -99,7 +99,7 @@ for epoch in range(num_epochs):
     average_loss = total_loss / len(train_dataset)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
 
-with open("./results/results_rnn_torch_nn.txt", "w") as file:
+with open("./results/results_rnn_torch.txt", "w") as file:
     file.write(str(loss_list[0]))
     for i in loss_list:
         file.write(","+str(i))

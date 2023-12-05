@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 
-torch.manual_seed(0)
+torch.manual_seed(1)
 
 device = torch.device("cpu")
 
@@ -61,7 +61,7 @@ class Net(nn.Module):
         return linear_output_final, (h,c)
 
 learning_rate = 0.001
-num_epochs = 5
+num_epochs = 10
 vocab_size = len(w2i)
 emb_dim = 300
 hidden_dim = 300
@@ -79,9 +79,9 @@ loss_list = []
 hidden = None
 cell = None
 batch_loss_it = 25
-batch_loss = 0
 for epoch in range(num_epochs):
     total_loss = 0.0
+    batch_loss = 0
     for i, data in enumerate(tqdm(train_dataset)):
         input, target = data[0].to(device), data[1].to(device).long()
 
