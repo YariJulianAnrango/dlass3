@@ -6,8 +6,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
+from torch import mps
 
-device = torch.device("mps" if torch.cuda.is_available() else "cpu")
+mps.empty_cache()
+device = torch.device("mps")
 
 (x_train, y_train), (x_val, y_val), (i2w, w2i), numcls = load_imdb(final=False)
 
@@ -23,7 +25,7 @@ class Elman(nn.Module):
     def forward(self, x, hidden=None):
         b, t, e = x.size()
         if hidden is None:
-            hidden = torch.zeros(b, e, dtype=torch.float)
+            hidden = torch.zeros(b, e, dtype=torch.float).to("mps")
         outs = []
         for i in range(t):
             inp = torch.cat([x[:, i, :], hidden], dim=1)
@@ -116,7 +118,7 @@ for epoch in range(num_epochs):
     average_loss = total_loss / len(train_dataset)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
 
-with open("./results/results_rnn.txt", "w") as file:
+with open("./results/test_results_rnn.txt", "w") as file:
     file.write(str(loss_list[0]))
     for i in loss_list:
         file.write(","+str(i))

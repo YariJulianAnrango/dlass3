@@ -1,4 +1,4 @@
-from RNN import load_imdb
+from rnn_data import load_imdb
 from Vraag_1 import get_batches
 
 import torch
@@ -13,6 +13,8 @@ device = torch.device('cpu')
 (x_train, y_train), (x_val, y_val), (i2w, w2i), numcls = load_imdb(final=False)
 
 x_train, y_train = get_batches(x_train, y_train, batch_size=32)
+
+torch.manual_seed(1)
 
 class SimpleSeq2SeqModel(nn.Module):
     def __init__(self, vocab_size, emb_dim, hidden_dim, num_classes):
@@ -33,7 +35,7 @@ class SimpleSeq2SeqModel(nn.Module):
         # 5) Linear layer
         self.linear2 = nn.Linear(hidden_dim, num_classes)
 
-    def forward(self, x, hidden):
+    def forward(self, x):
         # Input x: (batch, time)
 
         # 1) Embedding layer
@@ -54,7 +56,7 @@ class SimpleSeq2SeqModel(nn.Module):
         return linear_output_final
 
 learning_rate = 0.001
-num_epochs = 5
+num_epochs = 10
 vocab_size = len(w2i)
 emb_dim = 300
 hidden_dim = 300
@@ -68,28 +70,34 @@ train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
 # Training loop
 loss_list = []
-hidden = None
+batch_loss_it = 25
+criterion = nn.CrossEntropyLoss()
 for epoch in range(num_epochs):
     total_loss = 0.0
-    for input_batch, target_batch in tqdm(train_dataset):
-        input, target = input_batch.to(device), target_batch.to(device).long()
+    batch_loss = 0
+    for i, data in enumerate(tqdm(train_dataset)):
+        input, target = data[0].to(device), data[1].to(device).long()
 
         optimizer.zero_grad()
 
-        output = model(input, hidden)
+        output = model(input)
 
-        loss = F.cross_entropy(output, target)
+        loss = criterion(output, target)
 
-        loss.backward(retain_graph=True)
+        loss.backward()
         optimizer.step()
 
         total_loss += loss.item()
-        loss_list.append(loss.item())
+        batch_loss += loss.item()
+        if i % batch_loss_it == batch_loss_it - 1:
+            avg_loss_b = batch_loss / batch_loss_it
+            batch_loss = 0
+            loss_list.append(avg_loss_b)
         # Print average loss for the epoch
     average_loss = total_loss / len(train_dataset)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
 
 with open("./results/results_baseline_model.txt", "w") as file:
-    file.write(loss_list[0])
+    file.write(str(loss_list[0]))
     for i in loss_list:
         file.write(","+str(i))
