@@ -72,6 +72,7 @@ train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 loss_list = []
 batch_loss_it = 25
 criterion = nn.CrossEntropyLoss()
+epoch_loss = []
 for epoch in range(num_epochs):
     total_loss = 0.0
     batch_loss = 0
@@ -96,8 +97,9 @@ for epoch in range(num_epochs):
         # Print average loss for the epoch
     average_loss = total_loss / len(train_dataset)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
+    epoch_loss.append(average_loss)
 
-with open("./results/results_baseline_model.txt", "w") as file:
-    file.write(str(loss_list[0]))
-    for i in loss_list:
+with open("./results/results_baseline_model_epoch.txt", "w") as file:
+    file.write(str(epoch_loss[0]))
+    for i in epoch_loss:
         file.write(","+str(i))

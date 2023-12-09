@@ -8,8 +8,7 @@ import torch.optim as optim
 from tqdm import tqdm
 from torch import mps
 
-mps.empty_cache()
-device = torch.device("mps")
+device = torch.device("cpu")
 
 (x_train, y_train), (x_val, y_val), (i2w, w2i), numcls = load_imdb(final=False)
 
@@ -25,7 +24,7 @@ class Elman(nn.Module):
     def forward(self, x, hidden=None):
         b, t, e = x.size()
         if hidden is None:
-            hidden = torch.zeros(b, e, dtype=torch.float).to("mps")
+            hidden = torch.zeros(b, e, dtype=torch.float).to("cpu")
         outs = []
         for i in range(t):
             inp = torch.cat([x[:, i, :], hidden], dim=1)
@@ -93,6 +92,7 @@ train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 hidden = None
 loss_list = []
 batch_loss_it = 25
+epoch_loss = []
 for epoch in range(num_epochs):
     total_loss = 0.0
     batch_loss = 0
@@ -117,8 +117,9 @@ for epoch in range(num_epochs):
         # Print average loss for the epoch
     average_loss = total_loss / len(train_dataset)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
+    epoch_loss.append(average_loss)
 
-with open("./results/test_results_rnn.txt", "w") as file:
-    file.write(str(loss_list[0]))
-    for i in loss_list:
+with open("./results/results_rnn_epoch.txt", "w") as file:
+    file.write(str(epoch_loss[0]))
+    for i in epoch_loss[1:]:
         file.write(","+str(i))
