@@ -22,6 +22,7 @@ def sample(lnprobs, temperature=1.0):
         return lnprobs.argmax()
     p = F.softmax(lnprobs / temperature, dim=0)
     print(p)
+    print()
     cd = dist.Categorical(p)
     return cd.sample()
 
@@ -61,9 +62,7 @@ for epoch in range(num_epochs):
         input, target = data[0], data[1].long()
 
         optimizer.zero_grad()
-
-        output = model(input)
-
+        output, (hidden, cell) = model(input, hidden, cell)
         loss = criterium(output.permute(0,2,1), target)
 
         loss.backward()
@@ -72,12 +71,16 @@ for epoch in range(num_epochs):
         tot_loss += loss.item()
     average_loss = tot_loss/len(train_dataset)
     epoch_loss.append(average_loss)
-
+    print(f"Epoch: {epoch}, with loss: {average_loss}")
+    print()
     model.eval()
+    h = None
+    c = None
     for i in range(10):
-        output = model(seq_torch)
-        print(output)
+        output, (h, c) = model(seq_torch, h, c)
         sam = sample(output[0,1,:], temperature=0.3)
         seed_seq.append(sam)
-    print(seed_seq)
+        seq_torch = torch.tensor(seed_seq).unsqueeze(0).to(device)
+        print(seq_torch)
+
     model.train()
