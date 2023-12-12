@@ -55,51 +55,51 @@ class SimpleSeq2SeqModel(nn.Module):
 
         return linear_output_final
 
-learning_rate = 0.001
-num_epochs = 10
+num_epochs = 20
 vocab_size = len(w2i)
 emb_dim = 300
 hidden_dim = 300
 
-model = SimpleSeq2SeqModel(vocab_size, emb_dim, hidden_dim, numcls)
-model.to(device)
-
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
 train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
 # Training loop
-loss_list = []
 batch_loss_it = 25
-criterion = nn.CrossEntropyLoss()
-epoch_loss = []
-for epoch in range(num_epochs):
-    total_loss = 0.0
-    batch_loss = 0
-    for i, data in enumerate(tqdm(train_dataset)):
-        input, target = data[0].to(device), data[1].to(device).long()
+for l in [0.003, 0.001, 0.0003, 0.0001]:
+    model = SimpleSeq2SeqModel(vocab_size, emb_dim, hidden_dim, numcls)
+    model.to(device)
 
-        optimizer.zero_grad()
+    optimizer = optim.Adam(model.parameters(), lr=l)
+    loss_crit = nn.CrossEntropyLoss()
+    hidden = None
+    loss_list = []
+    epoch_loss = []
+    for epoch in range(num_epochs):
+        total_loss = 0.0
+        batch_loss = 0
+        for i, data in enumerate(tqdm(train_dataset)):
+            input, target = data[0].to(device), data[1].to(device).long()
 
-        output = model(input)
+            optimizer.zero_grad()
 
-        loss = criterion(output, target)
+            output = model(input)
 
-        loss.backward()
-        optimizer.step()
+            loss = loss_crit(output, target)
 
-        total_loss += loss.item()
-        batch_loss += loss.item()
-        if i % batch_loss_it == batch_loss_it - 1:
-            avg_loss_b = batch_loss / batch_loss_it
-            batch_loss = 0
-            loss_list.append(avg_loss_b)
-        # Print average loss for the epoch
-    average_loss = total_loss / len(train_dataset)
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
-    epoch_loss.append(average_loss)
+            loss.backward()
+            optimizer.step()
 
-with open("./results/results_baseline_model_epoch.txt", "w") as file:
-    file.write(str(epoch_loss[0]))
-    for i in epoch_loss:
-        file.write(","+str(i))
+            total_loss += loss.item()
+            batch_loss += loss.item()
+            if i % batch_loss_it == batch_loss_it - 1:
+                avg_loss_b = batch_loss / batch_loss_it
+                batch_loss = 0
+                loss_list.append(avg_loss_b)
+            # Print average loss for the epoch
+        average_loss = total_loss / len(train_dataset)
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
+        epoch_loss.append(average_loss)
+
+    with open(f"./results/learning_rate_exp/results_baseline_model_lr{l}.txt", "w") as file:
+        file.write(str(epoch_loss[0]))
+        for i in epoch_loss[1:]:
+            file.write(","+str(i))
