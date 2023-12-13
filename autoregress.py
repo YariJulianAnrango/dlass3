@@ -17,22 +17,15 @@ class LSTM(nn.Module):
 
         self.softmax = nn.Softmax(dim=2)
     def forward(self, x, h, c):
-
-        # 1) Embedding
         embedded = self.embedding(x)
 
-        # 2) LSTM
         b, t, e = embedded.size()
-
         if h is None:
             h = torch.zeros(1, b, self.hidden_dim, dtype=torch.float).to(self.device)
-        # if cell is None:
             c = torch.zeros(1, b, self.hidden_dim, dtype=torch.float).to(self.device)
         lstm_output, (hn, cn) = self.lstm(embedded, (h.detach(), c.detach()))
 
-        # 3) Linear
         linoutput = self.linear(lstm_output)
-
         # output = self.softmax(linoutput)
 
         return linoutput , (hn, cn)

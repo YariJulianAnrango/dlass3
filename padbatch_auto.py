@@ -14,7 +14,7 @@ def seedshuffle():
 def get_batches(x_set, w2i, batch_size = 30):
     all_padded_batches_x = []
     all_tensor_batches_y = []
-    for i in range(0, len(x_set), batch_size):
+    for i in range(0, 500, batch_size):
         batch_x = x_set[i:i + batch_size]
         batch_x = [[w2i[".start"]] + sublist + [w2i[".end"]] for sublist in batch_x]
         batch_y = []

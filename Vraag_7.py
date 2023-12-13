@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import torch
 import torch.optim as optim
 import torch.nn as nn
+import matplotlib.pyplot as plt
 
 import numpy as np
 from tqdm import tqdm
@@ -10,6 +11,7 @@ from tqdm import tqdm
 from autoregress import LSTM
 from padbatch_auto import get_batches
 from rnn_data import load_brackets
+
 def sample(lnprobs, temperature=1.0):
     """
     Sample an element from a categorical distribution
@@ -30,7 +32,7 @@ def sample(lnprobs, temperature=1.0):
 x_train, (i2w, w2i) = load_brackets(n=150_000)
 
 x_train, y_train = get_batches(x_train, w2i)
-
+print(x_train[-1])
 train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
 # Init model
@@ -74,6 +76,8 @@ for epoch in range(num_epochs):
     print(f"Epoch: {epoch}, with loss: {average_loss}")
     print()
     model.eval()
+
+
     h = None
     c = None
     for i in range(10):
@@ -84,3 +88,5 @@ for epoch in range(num_epochs):
         print(seq_torch)
 
     model.train()
+
+

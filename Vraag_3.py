@@ -14,6 +14,8 @@ device = torch.device('cpu')
 
 x_train, y_train = get_batches(x_train, y_train, batch_size=32)
 
+print(x_train)
+
 torch.manual_seed(1)
 
 class SimpleSeq2SeqModel(nn.Module):
