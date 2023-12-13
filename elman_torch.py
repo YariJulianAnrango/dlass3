@@ -18,55 +18,40 @@ class Net(nn.Module):
     def __init__(self, vocab_size, emb_dim, hidden_dim, num_classes):
         super(Net, self).__init__()
         self.hidden_dim = hidden_dim
-        # 1) Embedding layer
         self.embedding = nn.Embedding(vocab_size, emb_dim)
-
-        # 2) Linear layer applied to each token
         self.elman = nn.RNN(emb_dim, hidden_dim, batch_first=True)
-
-        # 3) ReLU activation
         self.relu = nn.ReLU()
-
-        # 4) Global max pool along the time dimension
         self.global_max_pool = nn.AdaptiveMaxPool1d(1)
-
-        # 5) Linear layer
         self.linear2 = nn.Linear(hidden_dim, num_classes)
 
     def forward(self, x, hidden):
-
-        # 1) Embedding layer
         embedded = self.embedding(x)
 
-        # 2) RNN layer
+        #rnn
         b, t, e = embedded.size()
         if hidden is None:
             hidden = torch.zeros(1, b, e, dtype=torch.float).to("cpu")
         elman_output, hidden_elman = self.elman(embedded, hidden.detach())
 
-        # 3) ReLU activation
         relu_output = self.relu(elman_output)
         relu_perm = relu_output.permute(0, 2, 1)
-        # 4) Global max pool along the time dimension
         pooled_output = self.global_max_pool(relu_perm)
-
-        # 5) Linear layer
         pool_squeeze = pooled_output.squeeze()
         linear_output_final = self.linear2(pool_squeeze)
 
         return linear_output_final, hidden_elman
 
-num_epochs = 20
-vocab_size = len(w2i)
-emb_dim = 300
-hidden_dim = 300
+num_epochs = 10
+token_size = len(w2i)
+embedding_size = 300
+hidden_size = 300
 
 train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
-# Training loop
+#start training loop
 batch_loss_it = 25
 for l in [0.003, 0.001, 0.0003, 0.0001]:
-    model = Net(vocab_size, emb_dim, hidden_dim, numcls)
+    model = Net(token_size, embedding_size, hidden_size, numcls)
     model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=l)
@@ -81,16 +66,14 @@ for l in [0.003, 0.001, 0.0003, 0.0001]:
             input, target = data[0].to(device), data[1].to(device).long()
 
             optimizer.zero_grad()
-
             output, hidden = model(input, hidden)
-
             loss = loss_crit(output, target)
-
             loss.backward()
             optimizer.step()
 
             total_loss += loss.item()
             batch_loss += loss.item()
+            
             if i % batch_loss_it == batch_loss_it - 1:
                 avg_loss_b = batch_loss / batch_loss_it
                 batch_loss = 0

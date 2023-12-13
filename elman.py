@@ -37,48 +37,29 @@ class Elman(nn.Module):
 class Net(nn.Module):
     def __init__(self, vocab_size, emb_dim, hidden_dim, num_classes):
         super(Net, self).__init__()
-
-        # 1) Embedding layer
         self.embedding = nn.Embedding(vocab_size, emb_dim)
-
-        # 2) Linear layer applied to each token
         self.elman = Elman(emb_dim, hidden_dim)
         self.linear1 = nn.Linear(emb_dim, hidden_dim)
-
-        # 3) ReLU activation
         self.relu = nn.ReLU()
-
-        # 4) Global max pool along the time dimension
         self.global_max_pool = nn.AdaptiveMaxPool1d(1)
-
-        # 5) Linear layer
         self.linear2 = nn.Linear(hidden_dim, num_classes)
 
     def forward(self, x, hidden):
-        # Input x: (batch, time)
-
-        # 1) Embedding layer
         embedded = self.embedding(x)
-
-        # 2) Linear layer applied to each token
         elman_output, hidden_elman = self.elman(embedded, hidden)
         # linear_output = self.linear1(embedded)
-        # 3) ReLU activation
         relu_output = self.relu(elman_output)
         relu_perm = relu_output.permute(0, 2, 1)
-        # 4) Global max pool along the time dimension
         pooled_output = self.global_max_pool(relu_perm)
-
-        # 5) Linear layer
         pool_squeeze = pooled_output.squeeze()
         linear_output_final = self.linear2(pool_squeeze)
 
         return linear_output_final, hidden_elman
 
-num_epochs = 20
-vocab_size = len(w2i)
-emb_dim = 300
-hidden_dim = 300
+num_epochs = 10
+token_size = len(w2i)
+embedding_size = 300
+hidden_size = 300
 
 train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
@@ -86,7 +67,7 @@ train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 batch_loss_it = 25
 
 for l in [0.003, 0.001, 0.0003, 0.0001]:
-    model = Net(vocab_size, emb_dim, hidden_dim, numcls)
+    model = Net(token_size, embedding_size, hidden_size, numcls)
     model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=l)
