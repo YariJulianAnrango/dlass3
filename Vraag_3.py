@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
+import csv
 
 device = torch.device('cpu')
 
@@ -55,7 +56,7 @@ class SimpleSeq2SeqModel(nn.Module):
 
         return linear_output_final
 
-num_epochs = 20
+num_epochs = 10
 vocab_size = len(w2i)
 emb_dim = 300
 hidden_dim = 300
@@ -64,42 +65,60 @@ train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
 # Training loop
 batch_loss_it = 25
-for l in [0.003, 0.001, 0.0003, 0.0001]:
-    model = SimpleSeq2SeqModel(vocab_size, emb_dim, hidden_dim, numcls)
-    model.to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=l)
-    loss_crit = nn.CrossEntropyLoss()
-    hidden = None
-    loss_list = []
-    epoch_loss = []
-    for epoch in range(num_epochs):
-        total_loss = 0.0
-        batch_loss = 0
-        for i, data in enumerate(tqdm(train_dataset)):
-            input, target = data[0].to(device), data[1].to(device).long()
+model = SimpleSeq2SeqModel(vocab_size, emb_dim, hidden_dim, numcls)
+model.to(device)
 
-            optimizer.zero_grad()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+loss_crit = nn.CrossEntropyLoss()
 
-            output = model(input)
 
-            loss = loss_crit(output, target)
+epoch_loss = []
+for epoch in range(num_epochs):
+    total_loss = 0.0
+    for i, data in enumerate(tqdm(train_dataset)):
+        input, target = data[0].to(device), data[1].to(device).long()
 
-            loss.backward()
-            optimizer.step()
+        optimizer.zero_grad()
 
-            total_loss += loss.item()
-            batch_loss += loss.item()
-            if i % batch_loss_it == batch_loss_it - 1:
-                avg_loss_b = batch_loss / batch_loss_it
-                batch_loss = 0
-                loss_list.append(avg_loss_b)
-            # Print average loss for the epoch
-        average_loss = total_loss / len(train_dataset)
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
-        epoch_loss.append(average_loss)
+        output = model(input)
 
-    with open(f"./results/learning_rate_exp/results_baseline_model_lr{l}.txt", "w") as file:
-        file.write(str(epoch_loss[0]))
-        for i in epoch_loss[1:]:
-            file.write(","+str(i))
+        loss = loss_crit(output, target)
+
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+        # Print average loss for the epoch
+    average_loss = total_loss / len(train_dataset)
+    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.4f}')
+    epoch_loss.append(average_loss)
+
+with open(f"./results/vraag3_loss.txt", "w") as file:
+    file.write(str(epoch_loss[0]))
+    for i in epoch_loss[1:]:
+        file.write(","+str(i))
+
+
+# Validation prediction
+x_val, y_val = get_batches(x_val, y_val, batch_size=32)
+val_dataset = [(x, y) for x, y in zip(x_val, y_val)]
+model.eval()
+preds = []
+trues = []
+for i, data in enumerate(val_dataset):
+    input, target = data[0].to(device), data[1].to(device).long()
+
+    optimizer.zero_grad()
+
+    output = model(input)
+    for j in output:
+        pred = j.argmax().tolist()
+        preds.append(pred)
+    for t in target:
+        trues.append(t.tolist())
+
+with open('./results/truesandpreds.csv', 'w') as f:
+    f.write("trues,pred\n")
+    writer = csv.writer(f)
+    writer.writerows(zip(trues, preds))
