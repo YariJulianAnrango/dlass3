@@ -7,8 +7,6 @@ def pad(batch_sequences):
                                     padding_value=0)
     return padded_sequences
 
-def seedshuffle():
-    return 0.1
 
 
 def get_batches(x_set, w2i, batch_size = 30):
@@ -27,7 +25,9 @@ def get_batches(x_set, w2i, batch_size = 30):
         all_padded_batches_x.append(padded_batch_x)
         all_tensor_batches_y.append(padded_batch_y)
 
-        random.shuffle(all_padded_batches_x, seedshuffle)
-        random.shuffle(all_tensor_batches_y, seedshuffle)
+    temp = list(zip(all_padded_batches_x, all_tensor_batches_y))
+    random.shuffle(temp)
 
-    return all_padded_batches_x, all_tensor_batches_y
+    resx, resy = zip(*temp)
+    x, y = list(resx), list(resy)
+    return x, y
