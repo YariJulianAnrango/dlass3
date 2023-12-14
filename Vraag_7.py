@@ -21,15 +21,13 @@ def sample(lnprobs, temperature=1.0):
     if temperature == 0.0:
         return lnprobs.argmax()
     p = F.softmax(lnprobs / temperature, dim=0)
-    print(p)
-    print()
     cd = dist.Categorical(p)
     return cd.sample()
 
 # Prepare data
-x_train, (i2w, w2i) = load_brackets(n=150_000)
+x_og, (i2w, w2i) = load_brackets(n=150_000)
 
-x_train, y_train = get_batches(x_train, w2i)
+x_train, y_train = get_batches(x_og, w2i, batch_size=30)
 
 train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
@@ -53,10 +51,6 @@ hidden = None
 cell = None
 epoch_loss = []
 for epoch in range(num_epochs):
-    # Get seed sample
-    seed_seq = [w2i['.start'], w2i['('], w2i['('], w2i[')']]
-    seq_torch = torch.tensor(seed_seq).unsqueeze(0).to(device)
-
     tot_loss = 0
     for i, data in enumerate(tqdm(train_dataset)):
         input, target = data[0], data[1].long()
@@ -72,15 +66,21 @@ for epoch in range(num_epochs):
     average_loss = tot_loss/len(train_dataset)
     epoch_loss.append(average_loss)
     print(f"Epoch: {epoch}, with loss: {average_loss}")
-    print()
-    model.eval()
-    h = None
-    c = None
-    for i in range(10):
-        output, (h, c) = model(seq_torch, h, c)
-        sam = sample(output[0,1,:], temperature=0.3)
-        seed_seq.append(sam)
-        seq_torch = torch.tensor(seed_seq).unsqueeze(0).to(device)
-        print(seq_torch)
 
-    model.train()
+model.eval()
+for t in [0.1, 1]:
+    print(f"sequences with temperature {t}")
+    for i in range(5):
+        print(f"sequence {i}")
+        seed_seq = [w2i['.start'], w2i['('], w2i[')'], w2i["("],w2i['(']]
+        seq_torch = torch.tensor(seed_seq).unsqueeze(0).to(device)
+        sam = 1
+        h = None
+        c = None
+        while sam != 2 and len(seq_torch.tolist()[0]) < 100:
+            output, (h, c) = model(seq_torch, h, c)
+            sam = sample(output[0,-1,:], temperature=t)
+            seed_seq.append(sam)
+            seq_torch = torch.tensor(seed_seq).unsqueeze(0).to(device)
+        print(''.join([i2w[i] for i in seq_torch.tolist()[0]]))
+    print()
