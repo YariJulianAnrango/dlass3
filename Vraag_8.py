@@ -34,11 +34,12 @@ def sample(lnprobs, temperature=1.0):
 x_train, (i2w, w2i) = load_brackets(n=150_000)
 
 x_train, y_train = get_batches(x_train, w2i)
+print(x_train)
 train_dataset = [(x, y) for x, y in zip(x_train, y_train)]
 
 #define parameters
 learning_rate = 0.001
-num_epochs = 1
+num_epochs = 20
 vocab_size = len(w2i)
 emb_dim = 32
 hidden_dim = 16
@@ -48,7 +49,7 @@ device = torch.device("cpu")
 model = LSTM(vocab_size=vocab_size, emb_dim=emb_dim, hidden_dim=hidden_dim, vocab=vocab_size, device=device)
 model.to(device)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-criterium = nn.CrossEntropyLoss()
+criterium = nn.CrossEntropyLoss(ignore_index=0)
 
 
 hidden = None
@@ -83,6 +84,7 @@ for epoch in range(num_epochs):
 #make function to generate sequence, using xtrain data as input data
 #in line: generated_sequence = torch.cat((input_sequence, next_element.unsqueeze(0).unsqueeze(0)))
 #RuntimeError: Sizes of tensors must match except in dimension 0. Expected size 4 but got size 1 for tensor number 1 in the list.
+"""
 def make_sequence(model, input_sequence):
     hidden = None
     cell = None
@@ -118,12 +120,13 @@ for i in range(10):
 
 overall_accuracy = sum(accuracies) / len(accuracies)
 print("Overall Accuracy:", overall_accuracy)
+"""
 
 #plot loss
-#plt.plot(epoch_loss)
-#plt.title('Loss over 50 epochs')
-#plt.xlabel('Epoch')
-#plt.ylabel('Loss')
-#plt.show()
+plt.plot(epoch_loss)
+plt.title('Loss over 50 epochs')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.show()
 
 writer.close()
